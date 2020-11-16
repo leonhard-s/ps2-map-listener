@@ -1,0 +1,2 @@
+auraxium
+asyncpg >= 0.21
