@@ -42,7 +42,7 @@ class PlayerBlip:
 
 
 @dataclasses.dataclass(frozen=True)
-class RelativePlayerBlib:
+class RelativePlayerBlip:
     """Relative player blips give relative positioning between players.
 
     This generally happens when players revive or kill each other. For
