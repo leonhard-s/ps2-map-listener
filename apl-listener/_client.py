@@ -121,30 +121,25 @@ class EventListener:
         :param event: The event received.
 
         """
-        if event.type == auraxium.EventType.DEATH:
-            try:
+        try:
+            if event.type == auraxium.EventType.DEATH:
                 blip = RelativePlayerBlip(
                     event.timestamp,
                     int(event.payload['attacker_character_id']),
                     int(event.payload['character_id']),
                     int(event.payload['world_id']),
                     int(event.payload['zone_id']))
-            except ValueError as err:
-                log.exception('Ignoring %s in relative_player_blip action',
-                              type(err))
-                return
-        else:
-            try:
+            else:
                 blip = RelativePlayerBlip(
                     event.timestamp,
                     int(event.payload['character_id']),
                     int(event.payload['other_id']),
                     int(event.payload['world_id']),
                     int(event.payload['zone_id']))
-            except ValueError as err:
-                log.exception(
-                    'Ignoring %s in relative_player_blip action', type(err))
-                return
+        except ValueError as err:
+            log.exception(
+                'Ignoring %s in relative_player_blip action', type(err))
+            return
 
         if (blip.character_a_id == 0
                 or blip.character_b_id == 0
