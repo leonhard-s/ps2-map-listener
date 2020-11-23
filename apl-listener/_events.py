@@ -7,7 +7,7 @@ back and merged to simplify the information contained.
 
 import dataclasses
 import datetime
-from typing import Optional
+# from typing import Optional
 
 __all__ = [
     'PlayerBlip',
@@ -105,10 +105,10 @@ class FacilityCapture:
 
     timestamp: datetime.datetime
     facility_id: int
-    duration_held: int
+    # duration_held: int
     new_faction_id: int
     old_faction_id: int
-    outfit_id: Optional[int]
+    # outfit_id: Optional[int]
     server_id: int
     zone_id: int
 

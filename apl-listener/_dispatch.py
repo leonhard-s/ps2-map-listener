@@ -21,8 +21,8 @@ async def facility_control(
     """Dispatch a :class:`FacilityCapture` blip to the database."""
     await conn.execute(  # type: ignore
         """--sql
-        INSERT INTO blips.FacilityCapture VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8
+        INSERT INTO blips."FacilityCapture" VALUES (
+            $1, $2, $3, $4, $5, $6
         );""", *dataclasses.astuple(blip))
 
 
@@ -31,7 +31,7 @@ async def player_blip(
     """Dispatch a :class:`PlayerBlip` blip to the database."""
     await conn.execute(  # type: ignore
         """--sql
-        INSERT INTO blips.PlayerBlip VALUES (
+        INSERT INTO blips."PlayerBlip" VALUES (
             $1, $2, $3, $4, $5
         );""", *dataclasses.astuple(blip))
 
@@ -41,6 +41,6 @@ async def relative_player_blip(
     """Dispatch a :class:`RelativePlayerBlip` blip to the database."""
     await conn.execute(  # type: ignore
         """--sql
-        INSERT INTO blips.RelativePlayerBlip VALUES (
+        INSERT INTO blips."RelativePlayerBlip" VALUES (
             $1, $2, $3, $4, $5
         );""", *dataclasses.astuple(blip))

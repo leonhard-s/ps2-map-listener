@@ -81,10 +81,10 @@ class EventListener:
             blip = FacilityCapture(
                 event.timestamp,
                 int(event.payload['facility_id']),
-                int(event.payload['duration_held']),
+                # int(event.payload['duration_held']),
                 int(event.payload['new_faction_id']),
                 int(event.payload['old_faction_id']),
-                int(event.payload['outfit_id']),
+                # int(event.payload['outfit_id']),
                 int(event.payload['world_id']),
                 int(event.payload['zone_id']))
         except ValueError as err:
