@@ -12,6 +12,16 @@ from ._events import FacilityCapture, PlayerBlip, RelativePlayerBlip
 log = logging.getLogger('listener')
 
 
+_WORLDS = [
+    1,  # Connery
+    10,  # Miller
+    13,  # Cobalt
+    17,   # Emerald
+    25,  # Briggs
+    40  # SolTech
+]
+
+
 class EventListener:
     """The APL event listener instance.
 
@@ -56,7 +66,10 @@ class EventListener:
         self._arx_client.add_trigger(auraxium.Trigger(
             auraxium.EventType.FACILITY_CONTROL,
             action=self.facility_control,
-            name='FacilityControl'))
+            name='FacilityControl',
+            # NOTE: Implicitly subscribing to all worlds is not permitted, so
+            # we must subscribe to all of them individually.
+            worlds=_WORLDS))
 
     async def facility_control(self, event: auraxium.Event) -> None:
         """Validate and dispatch facility captures.
