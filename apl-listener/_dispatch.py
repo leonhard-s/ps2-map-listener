@@ -9,38 +9,34 @@ and Python objects.
 
 """
 
-import dataclasses
+from typing import Any
 
 import asyncpg
 
-from ._events import FacilityCapture, PlayerBlip, RelativePlayerBlip
 
-
-async def facility_control(
-        blip: FacilityCapture, conn: asyncpg.Connection) -> None:
-    """Dispatch a :class:`FacilityCapture` blip to the database."""
+async def facility_control(*args: Any, conn: asyncpg.Connection) -> None:
+    """Dispatch a ``FacilityCapture`` blip to the database."""
     await conn.execute(  # type: ignore
         """--sql
         INSERT INTO blips."FacilityCapture" VALUES (
             $1, $2, $3, $4, $5, $6
-        );""", *dataclasses.astuple(blip))
+        );""", *args)
 
 
-async def player_blip(
-        blip: PlayerBlip, conn: asyncpg.Connection) -> None:
-    """Dispatch a :class:`PlayerBlip` blip to the database."""
+async def player_blip(*args: Any, conn: asyncpg.Connection) -> None:
+    """Dispatch a ``PlayerBlip`` blip to the database."""
     await conn.execute(  # type: ignore
         """--sql
         INSERT INTO blips."PlayerBlip" VALUES (
             $1, $2, $3, $4, $5
-        );""", *dataclasses.astuple(blip))
+        );""", *args)
 
 
 async def relative_player_blip(
-        blip: RelativePlayerBlip, conn: asyncpg.Connection) -> None:
-    """Dispatch a :class:`RelativePlayerBlip` blip to the database."""
+        *args: Any, conn: asyncpg.Connection) -> None:
+    """Dispatch a ``RelativePlayerBlip`` blip to the database."""
     await conn.execute(  # type: ignore
         """--sql
         INSERT INTO blips."RelativePlayerBlip" VALUES (
             $1, $2, $3, $4, $5
-        );""", *dataclasses.astuple(blip))
+        );""", *args)

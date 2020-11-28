@@ -10,12 +10,9 @@ launch the listener. See its documentation for details.
 """
 
 from ._client import EventListener
-from ._events import PlayerBlip, RelativePlayerBlip
 
 __all__ = [
-    'EventListener',
-    'PlayerBlip',
-    'RelativePlayerBlip'
+    'EventListener'
 ]
 
 __version__ = '0.0.1a0'
