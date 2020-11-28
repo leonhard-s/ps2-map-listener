@@ -2,15 +2,18 @@
 
 import asyncio
 import logging
+from typing import Any, Callable, Coroutine, TypeVar
 
 import asyncpg
 import auraxium
 
 from ._dispatch import facility_control, player_blip, relative_player_blip
 
-log = logging.getLogger('listener')
+# Type aliases
+_ActionT = TypeVar('_ActionT', bound=Callable[..., Coroutine[Any, Any, None]])
 
-
+# The list of world IDs to be tracked. See the facility_control handler for
+# details.
 _WORLDS = [
     1,  # Connery
     10,  # Miller
@@ -19,6 +22,31 @@ _WORLDS = [
     25,  # Briggs
     40  # SolTech
 ]
+
+log = logging.getLogger('listener')
+
+
+def _log_errors(func: _ActionT) -> _ActionT:
+    """Error handler for the decorated function.
+
+    Any exceptions raised within the given function will be suppressed
+    and logged.
+
+    """
+
+    async def wrapper(*args: Any, **kwargs: Any) -> None:
+        try:
+            return await func(*args, **kwargs)
+        except ValueError as err:
+            log.exception('Argument conversion error in \'%s\':\n'
+                          '  Args: %s\n'
+                          '  Kwargs: %s',
+                          func.__name__, args, kwargs)
+        except BaseException as err:
+            # Fallback clause for generic exceptions
+            log.exception('Ignoring generic exception in \'%s\':', type(err))
+
+    return wrapper
 
 
 class EventListener:
@@ -70,6 +98,7 @@ class EventListener:
             # we must subscribe to all of them individually.
             worlds=_WORLDS))
 
+    @_log_errors
     async def facility_control(self, event: auraxium.Event) -> None:
         """Validate and dispatch facility captures.
 
@@ -92,6 +121,7 @@ class EventListener:
         async with self._db_lock:
             await facility_control(blip, conn=self._db_conn)
 
+    @_log_errors
     async def player_blip(self, event: auraxium.Event) -> None:
         """Validate and dispatch a :class:`PlayerBlip`.
 
@@ -115,6 +145,7 @@ class EventListener:
         async with self._db_lock:
             await player_blip(blip, conn=self._db_conn)
 
+    @_log_errors
     async def relative_player_blip(self, event: auraxium.Event) -> None:
         """Validate and dispatch a :class:`RelativePlayerBlip`.
 
