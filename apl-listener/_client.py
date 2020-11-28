@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any, Callable, Coroutine, TypeVar
+from typing import Any, Callable, Coroutine, TypeVar, cast
 
 import asyncpg
 import auraxium
@@ -46,7 +46,7 @@ def _log_errors(func: _ActionT) -> _ActionT:
             # Fallback clause for generic exceptions
             log.exception('Ignoring generic exception in \'%s\':', type(err))
 
-    return wrapper
+    return cast(_ActionT, wrapper)
 
 
 class EventListener:
@@ -105,19 +105,16 @@ class EventListener:
         :param event: The event received.
 
         """
-        try:
-            blip = (
-                event.timestamp,
-                int(event.payload['facility_id']),
-                # int(event.payload['duration_held']),
-                int(event.payload['new_faction_id']),
-                int(event.payload['old_faction_id']),
-                # int(event.payload['outfit_id']),
-                int(event.payload['world_id']),
-                int(event.payload['zone_id']))
-        except ValueError as err:
-            log.exception('Ignoring %s in facility_control action', type(err))
-            return
+        blip = (
+            event.timestamp,
+            int(event.payload['facility_id']),
+            # int(event.payload['duration_held']),
+            int(event.payload['new_faction_id']),
+            int(event.payload['old_faction_id']),
+            # int(event.payload['outfit_id']),
+            int(event.payload['world_id']),
+            int(event.payload['zone_id']))
+        log.debug('Dispatching blip: %s', blip)
         async with self._db_lock:
             await facility_control(blip, conn=self._db_conn)
 
@@ -128,20 +125,17 @@ class EventListener:
         :param event: The event received.
 
         """
-        try:
-            character_id = int(event.payload['character_id'])
-            blip = (
-                event.timestamp,
-                character_id,
-                int(event.payload['facility_id']),
-                int(event.payload['world_id']),
-                int(event.payload['zone_id']))
-        except ValueError as err:
-            log.exception('Ignoring %s in facility_control action', type(err))
-            return
-        if character_id == 0:
+        player_id = int(event.payload['character_id'])
+        blip = (
+            event.timestamp,
+            player_id,
+            int(event.payload['facility_id']),
+            int(event.payload['world_id']),
+            int(event.payload['zone_id']))
+        if player_id == 0:
             log.warning('Unexpected character ID 0 in facility_control action')
             return
+        log.debug('Dispatching blip: %s', blip)
         async with self._db_lock:
             await player_blip(blip, conn=self._db_conn)
 
@@ -152,27 +146,19 @@ class EventListener:
         :param event: The event received.
 
         """
-        try:
-            if event.type == auraxium.EventType.DEATH:
-                character_a_id = int(event.payload['attacker_character_id'])
-                character_b_id = int(event.payload['character_id'])
-            else:
-                character_a_id = int(event.payload['character_id'])
-                character_b_id = int(event.payload['other_id'])
-            blip = (
-                event.timestamp,
-                character_a_id,
-                character_b_id,
-                int(event.payload['world_id']),
-                int(event.payload['zone_id']))
-        except ValueError as err:
-            log.exception(
-                'Ignoring %s in relative_player_blip action', type(err))
-            return
-
-        if (character_a_id == 0
-                or character_b_id == 0
-                or character_a_id == character_b_id):
+        if event.type == auraxium.EventType.DEATH:
+            player_a_id = int(event.payload['attacker_character_id'])
+            player_b_id = int(event.payload['character_id'])
+        else:
+            player_a_id = int(event.payload['character_id'])
+            player_b_id = int(event.payload['other_id'])
+        blip = (
+            event.timestamp,
+            player_a_id,
+            player_b_id,
+            int(event.payload['world_id']),
+            int(event.payload['zone_id']))
+        if (player_a_id == 0 or player_b_id == 0 or player_a_id == player_b_id):
             # For death events, it is common for the attacker (A) to be
             # identical to the victim (B), or for the attacker (A) to be 0.
             #
@@ -180,9 +166,10 @@ class EventListener:
             # they point to regular, common ingame events like killing oneself
             # or dying to spawn room pain fields.
             if (not event.payload['event_name'] == 'Death'
-                    or character_b_id == 0):
+                    or player_b_id == 0):
                 log.warning(
                     'Unexpected character ID 0 in relative_player_blip action')
             return
+        log.debug('Dispatching blip: %s', blip)
         async with self._db_lock:
             await relative_player_blip(blip, conn=self._db_conn)
