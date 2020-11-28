@@ -1,8 +1,9 @@
 """Event listening client definition."""
 
 import asyncio
+import datetime
 import logging
-from typing import Any, Callable, Coroutine, TypeVar, cast
+from typing import Any, Callable, Coroutine, Dict, TypeVar, cast
 
 import asyncpg
 import auraxium
@@ -61,6 +62,10 @@ class EventListener:
         self._arx_client = auraxium.EventClient(service_id=service_id)
         self._db_conn = conn
         self._db_lock = asyncio.Lock()
+        # This dictionary is used to keep track of the number of events
+        # received
+        self._dispatch_cache: Dict[str, int] = {}
+        self._dispatch_last_update = datetime.datetime.now()
 
     async def close(self) -> None:
         """Gracefully close the event listener."""
@@ -98,6 +103,24 @@ class EventListener:
             # we must subscribe to all of them individually.
             worlds=_WORLDS))
 
+    def _push_dispatch(self, event_name: str) -> None:
+        cache = self._dispatch_cache
+        # Update dispatch cache
+        try:
+            cache[event_name] += 1
+        except KeyError:
+            cache[event_name] = 1
+        # Push the current status to the user every 5 seconds
+        now = datetime.datetime.now()
+        if now >= self._dispatch_last_update + datetime.timedelta(seconds=5.0):
+            if log.getEffectiveLevel() <= logging.INFO:
+                data = sorted((f'{k}: {v}' for k, v in cache.items()))
+                total = sum(cache.values())
+                log.info('Sent %d events over the last 5 seconds:\n\t%s',
+                         total, '\n\t'.join(data))
+            cache.clear()
+            self._dispatch_last_update = now
+
     @_log_errors
     async def facility_control(self, event: auraxium.Event) -> None:
         """Validate and dispatch facility captures.
@@ -116,6 +139,7 @@ class EventListener:
             int(event.payload['zone_id']))
         async with self._db_lock:
             await facility_control(*blip, conn=self._db_conn)
+        self._push_dispatch('facility_control')
 
     @_log_errors
     async def player_blip(self, event: auraxium.Event) -> None:
@@ -136,6 +160,7 @@ class EventListener:
             return
         async with self._db_lock:
             await player_blip(*blip, conn=self._db_conn)
+        self._push_dispatch('player_blip')
 
     @_log_errors
     async def relative_player_blip(self, event: auraxium.Event) -> None:
@@ -170,3 +195,4 @@ class EventListener:
             return
         async with self._db_lock:
             await relative_player_blip(*blip, conn=self._db_conn)
+        self._push_dispatch('relative_player_blip')
