@@ -114,9 +114,8 @@ class EventListener:
             # int(event.payload['outfit_id']),
             int(event.payload['world_id']),
             int(event.payload['zone_id']))
-        log.debug('Dispatching blip: %s', blip)
         async with self._db_lock:
-            await facility_control(blip, conn=self._db_conn)
+            await facility_control(*blip, conn=self._db_conn)
 
     @_log_errors
     async def player_blip(self, event: auraxium.Event) -> None:
@@ -135,9 +134,8 @@ class EventListener:
         if player_id == 0:
             log.warning('Unexpected character ID 0 in facility_control action')
             return
-        log.debug('Dispatching blip: %s', blip)
         async with self._db_lock:
-            await player_blip(blip, conn=self._db_conn)
+            await player_blip(*blip, conn=self._db_conn)
 
     @_log_errors
     async def relative_player_blip(self, event: auraxium.Event) -> None:
@@ -170,6 +168,5 @@ class EventListener:
                 log.warning(
                     'Unexpected character ID 0 in relative_player_blip action')
             return
-        log.debug('Dispatching blip: %s', blip)
         async with self._db_lock:
-            await relative_player_blip(blip, conn=self._db_conn)
+            await relative_player_blip(*blip, conn=self._db_conn)
