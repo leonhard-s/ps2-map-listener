@@ -12,5 +12,4 @@ setuptools.setup(name='APL listener (Scott)',
                  version='0.0.1a0',
                  author='Leonhard S.',
                  author_email='leonhard-sei@outlook.com',
-                 url='https://github.com/leonhard-s/auraxium',
                  packages=setuptools.find_packages())
