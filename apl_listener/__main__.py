@@ -20,7 +20,7 @@ log = logging.getLogger('listener')
 
 # Default database configuration
 DEFAULT_DB_HOST = '127.0.0.1'
-DEFAULT_DB_NAME = 'apl'
+DEFAULT_DB_NAME = 'postgres'
 DEFAULT_DB_USER = 'postgres'
 
 # Logging configuration
