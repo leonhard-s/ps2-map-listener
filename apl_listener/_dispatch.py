@@ -10,8 +10,11 @@ and Python objects.
 """
 
 import datetime
+import logging
 
 import asyncpg
+
+log = logging.getLogger('listener')
 
 
 async def base_control(timestamp: datetime.datetime, base_id: int,
@@ -19,32 +22,38 @@ async def base_control(timestamp: datetime.datetime, base_id: int,
                        server_id: int, continent_id: int,
                        conn: asyncpg.Connection) -> None:
     """Dispatch a ``BaseControl`` blip to the database."""
-    await conn.execute(  # type: ignore
-        """--sql
-        INSERT INTO "event"."BaseControl" (
-            "timestamp", "server_id", "continent_id", "base_id",
-            "old_faction_id", "new_faction_id"
-        )
-        VALUES (
-            $1, $2, $3, $4, $5, $6
-        );""",
-        timestamp, server_id, continent_id, base_id,
-        old_faction_id, new_faction_id)
+    try:
+        await conn.execute(  # type: ignore
+            """--sql
+            INSERT INTO "event"."BaseControl" (
+                "timestamp", "server_id", "continent_id", "base_id",
+                "old_faction_id", "new_faction_id"
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6
+            );""",
+            timestamp, server_id, continent_id, base_id,
+            old_faction_id, new_faction_id)
+    except asyncpg.exceptions.ForeignKeyViolationError as err:
+        log.info('Ignored FK violation: %s', err)
 
 
 async def player_blip(timestamp: datetime.datetime, player_id: int,
                       base_id: int, server_id: int, continent_id: int,
                       conn: asyncpg.Connection) -> None:
     """Dispatch a ``PlayerBlip`` to the database."""
-    await conn.execute(  # type: ignore
-        """--sql
-        INSERT INTO "event"."PlayerBlip" (
-            "timestamp", "server_id", "continent_id", "player_id", "base_id"
-        )
-        VALUES (
-            $1, $2, $3, $4, $5
-        );""",
-        timestamp, server_id, continent_id, player_id, base_id)
+    try:
+        await conn.execute(  # type: ignore
+            """--sql
+            INSERT INTO "event"."PlayerBlip" (
+                "timestamp", "server_id", "continent_id", "player_id", "base_id"
+            )
+            VALUES (
+                $1, $2, $3, $4, $5
+            );""",
+            timestamp, server_id, continent_id, player_id, base_id)
+    except asyncpg.exceptions.ForeignKeyViolationError as err:
+        log.info('Ignored FK violation: %s', err)
 
 
 async def relative_player_blip(timestamp: datetime.datetime, player_a_id: int,
@@ -52,16 +61,19 @@ async def relative_player_blip(timestamp: datetime.datetime, player_a_id: int,
                                continent_id: int, conn: asyncpg.Connection
                                ) -> None:
     """Dispatch a ``RelativePlayerBlip`` to the database."""
-    await conn.execute(  # type: ignore
-        """--sql
-        INSERT INTO "event"."RelativePlayerBlip" (
-            "timestamp", "server_id", "continent_id",
-            "player_a_id", "player_b_id"
-        )
-        VALUES (
-            $1, $2, $3, $4, $5
-        );""",
-        timestamp, server_id, continent_id, player_a_id, player_b_id)
+    try:
+        await conn.execute(  # type: ignore
+            """--sql
+            INSERT INTO "event"."RelativePlayerBlip" (
+                "timestamp", "server_id", "continent_id",
+                "player_a_id", "player_b_id"
+            )
+            VALUES (
+                $1, $2, $3, $4, $5
+            );""",
+            timestamp, server_id, continent_id, player_a_id, player_b_id)
+    except asyncpg.exceptions.ForeignKeyViolationError as err:
+        log.info('Ignored FK violation: %s', err)
 
 
 async def player_logout(timestamp: datetime.datetime, player_id: int,
