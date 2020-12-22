@@ -2,18 +2,28 @@
 
 This component is responsible for listening to websocket events received from the API and preparing the data for use in other components.
 
-More specific requirements:
+## What it does
 
-- Maintain one or more websocket connections
-  - Monitoring event frequency to detect dead subscriptions
-  - Detecting downtime
-  - Restarting from bad states
-- Validating and processing the JSON payloads received
-- Updating the database whenever the map changes
-  - Continent locks/unlocks
-  - API or server maintenance
-  - Unstable continents
-- Updating the database whenever population shifts
-  - Most population inferrence will be done through base captures/defences
-  - Vehicle destruction events provide extra position information
-  - If a player is killed by another player who has recently been seen in another hex, that hex is now the position of the current player (maybe split player positions evenly between "last confirmed" and "last seen"? testing required!)
+This script subscribes to events through [Auraxium](https://github.com/leonhard-s/auraxium), which takes care of maintaining the streaming connection and handling disconnects or other API errors.
+
+The events received from the PS2 API are generally too specific for our needs, lack important data and do not match our requirements. They are therefore processed and split up or combined into our own internal event definitions, called "blips".
+
+These blips are then inserted into the separate `event` schema of the database, which mostly acts as intermediate storage between components. The relevant database tables are replicated via Python data classes in the backend repository, whose definition can be found [here](https://github.com/auto-pl/apl-backend/blob/main/apl_backend/blips.py).
+
+## Status
+
+The listener is currently stable and ready for development use.
+
+### Implemented blips
+
+- `PlayerBlip` -- That player is definitely here right now
+- `RelativePlayerblip` -- These two players are close to each other
+- `PlayerLogout` -- This player logged out and can be purged from the population tracker
+- `BaseControl` -- A base has flipped ownership, for any reason (including unlocks or other non-capture events)
+
+### Missing capability
+
+- Subscription monitoring
+  - Check event frequency, detect events going missing
+  - Dropping and recreating stale subscriptions
+- Detecting API downtime and automatically restarting when it becomes available again
