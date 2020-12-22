@@ -14,7 +14,6 @@ import datetime
 import asyncpg
 
 
-
 async def base_control(timestamp: datetime.datetime, base_id: int,
                        new_faction_id: int, old_faction_id: int,
                        server_id: int, continent_id: int,
@@ -22,31 +21,44 @@ async def base_control(timestamp: datetime.datetime, base_id: int,
     """Dispatch a ``BaseControl`` blip to the database."""
     await conn.execute(  # type: ignore
         """--sql
-        INSERT INTO blips."BaseControl" VALUES (
+        INSERT INTO "event"."BaseControl" (
+            "timestamp", "server_id", "continent_id", "base_id",
+            "old_faction_id", "new_faction_id"
+        )
+        VALUES (
             $1, $2, $3, $4, $5, $6
         );""",
-        timestamp, base_id, new_faction_id, old_faction_id, server_id, zone_id)
+        timestamp, server_id, continent_id, base_id,
+        old_faction_id, new_faction_id)
 
 
 async def player_blip(timestamp: datetime.datetime, player_id: int,
-                      facility_id: int, server_id: int, zone_id: int,
+                      base_id: int, server_id: int, continent_id: int,
                       conn: asyncpg.Connection) -> None:
-    """Dispatch a ``PlayerBlip`` blip to the database."""
+    """Dispatch a ``PlayerBlip`` to the database."""
     await conn.execute(  # type: ignore
         """--sql
-        INSERT INTO blips."PlayerBlip" VALUES (
+        INSERT INTO "event"."PlayerBlip" (
+            "timestamp", "server_id", "continent_id", "player_id", "base_id"
+        )
+        VALUES (
             $1, $2, $3, $4, $5
         );""",
-        timestamp, player_id, facility_id, server_id, zone_id)
+        timestamp, server_id, continent_id, player_id, base_id)
 
 
 async def relative_player_blip(timestamp: datetime.datetime, player_a_id: int,
-                               player_b_id: int, server_id: int, zone_id: int,
-                               conn: asyncpg.Connection) -> None:
-    """Dispatch a ``RelativePlayerBlip`` blip to the database."""
+                               player_b_id: int, server_id: int,
+                               continent_id: int, conn: asyncpg.Connection
+                               ) -> None:
+    """Dispatch a ``RelativePlayerBlip`` to the database."""
     await conn.execute(  # type: ignore
         """--sql
-        INSERT INTO blips."RelativePlayerBlip" VALUES (
+        INSERT INTO "event"."RelativePlayerBlip" (
+            "timestamp", "server_id", "continent_id",
+            "player_a_id", "player_b_id"
+        )
+        VALUES (
             $1, $2, $3, $4, $5
         );""",
-        timestamp, player_a_id, player_b_id, server_id, zone_id)
+        timestamp, server_id, continent_id, player_a_id, player_b_id)
