@@ -36,6 +36,8 @@ async def base_control(timestamp: datetime.datetime, base_id: int,
             old_faction_id, new_faction_id)
     except asyncpg.exceptions.ForeignKeyViolationError as err:
         log.info('Ignored FK violation: %s', err)
+        return False
+    return True
 
 
 async def player_blip(timestamp: datetime.datetime, player_id: int,
@@ -54,6 +56,8 @@ async def player_blip(timestamp: datetime.datetime, player_id: int,
             timestamp, server_id, continent_id, player_id, base_id)
     except asyncpg.exceptions.ForeignKeyViolationError as err:
         log.info('Ignored FK violation: %s', err)
+        return False
+    return True
 
 
 async def relative_player_blip(timestamp: datetime.datetime, player_a_id: int,
@@ -74,6 +78,8 @@ async def relative_player_blip(timestamp: datetime.datetime, player_a_id: int,
             timestamp, server_id, continent_id, player_a_id, player_b_id)
     except asyncpg.exceptions.ForeignKeyViolationError as err:
         log.info('Ignored FK violation: %s', err)
+        return False
+    return True
 
 
 async def player_logout(timestamp: datetime.datetime, player_id: int,
@@ -88,3 +94,4 @@ async def player_logout(timestamp: datetime.datetime, player_id: int,
             $1, $2
         );""",
         timestamp, player_id)
+    return True

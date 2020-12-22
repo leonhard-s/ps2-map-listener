@@ -48,7 +48,7 @@ def _log_errors(func: _ActionT) -> _ActionT:
             # Fallback clause for generic exceptions
             log.exception('Ignoring generic exception in \'%s\':', type(err))
 
-    return cast(_ActionT, wrapper)
+    return cast(_ActionT, wrapper)  # type: ignore
 
 
 class EventListener:
@@ -144,8 +144,8 @@ class EventListener:
             int(event.payload['world_id']),
             int(event.payload['zone_id']))
         async with self._db_lock:
-            await base_control(*blip, conn=self._db_conn)
-        self._push_dispatch('base_control')
+            if await base_control(*blip, conn=self._db_conn):
+                self._push_dispatch('base_control')
 
     @_log_errors
     async def player_blip(self, event: auraxium.Event) -> None:
@@ -165,8 +165,8 @@ class EventListener:
             log.warning('Unexpected character ID 0 in base_control action')
             return
         async with self._db_lock:
-            await player_blip(*blip, conn=self._db_conn)
-        self._push_dispatch('player_blip')
+            if await player_blip(*blip, conn=self._db_conn):
+                self._push_dispatch('player_blip')
 
     @_log_errors
     async def player_logout(self, event: auraxium.Event) -> None:
@@ -183,8 +183,8 @@ class EventListener:
             log.warning('Unexpected character ID 0 in player_logout action')
             return
         async with self._db_lock:
-            await player_logout(*blip, conn=self._db_conn)
-        self._push_dispatch('player_logout')
+            if await player_logout(*blip, conn=self._db_conn):
+                self._push_dispatch('player_logout')
 
     @_log_errors
     async def relative_player_blip(self, event: auraxium.Event) -> None:
@@ -218,5 +218,5 @@ class EventListener:
                     'Unexpected character ID 0 in relative_player_blip action')
             return
         async with self._db_lock:
-            await relative_player_blip(*blip, conn=self._db_conn)
-        self._push_dispatch('relative_player_blip')
+            if await relative_player_blip(*blip, conn=self._db_conn):
+                self._push_dispatch('relative_player_blip')
