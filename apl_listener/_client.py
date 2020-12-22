@@ -8,7 +8,8 @@ from typing import Any, Callable, Coroutine, Dict, TypeVar, cast
 import asyncpg
 import auraxium
 
-from ._dispatch import base_control, player_blip, relative_player_blip
+from ._dispatch import (base_control, player_blip, player_logout,
+                        relative_player_blip)
 
 # Type aliases
 _ActionT = TypeVar('_ActionT', bound=Callable[..., Coroutine[Any, Any, None]])
@@ -102,6 +103,11 @@ class EventListener:
             # NOTE: Implicitly subscribing to all worlds is not permitted, so
             # we must subscribe to all of them individually.
             worlds=_WORLDS))
+        # BaseControl
+        self._arx_client.add_trigger(auraxium.Trigger(
+            auraxium.EventType.PLAYER_LOGOUT,
+            action=self.player_logout,
+            name='PlayerLogout'))
 
     def _push_dispatch(self, event_name: str) -> None:
         cache = self._dispatch_cache
@@ -161,6 +167,24 @@ class EventListener:
         async with self._db_lock:
             await player_blip(*blip, conn=self._db_conn)
         self._push_dispatch('player_blip')
+
+    @_log_errors
+    async def player_logout(self, event: auraxium.Event) -> None:
+        """Validate and dispatch a ``PlayerLogout`` blip.
+
+        :param event: The event received.
+
+        """
+        player_id = int(event.payload['character_id'])
+        blip = (
+            event.timestamp,
+            player_id)
+        if player_id == 0:
+            log.warning('Unexpected character ID 0 in player_logout action')
+            return
+        async with self._db_lock:
+            await player_logout(*blip, conn=self._db_conn)
+        self._push_dispatch('player_logout')
 
     @_log_errors
     async def relative_player_blip(self, event: auraxium.Event) -> None:

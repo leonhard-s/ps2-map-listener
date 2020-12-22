@@ -62,3 +62,17 @@ async def relative_player_blip(timestamp: datetime.datetime, player_a_id: int,
             $1, $2, $3, $4, $5
         );""",
         timestamp, server_id, continent_id, player_a_id, player_b_id)
+
+
+async def player_logout(timestamp: datetime.datetime, player_id: int,
+                        conn: asyncpg.Connection) -> None:
+    """Dispatch a ``PlayerLogout`` blip to the database."""
+    await conn.execute(  # type: ignore
+        """--sql
+        INSERT INTO "event"."PlayerLogout" (
+            "timestamp", "player_id"
+        )
+        VALUES (
+            $1, $2
+        );""",
+        timestamp, player_id)
