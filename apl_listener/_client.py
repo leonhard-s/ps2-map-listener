@@ -8,12 +8,12 @@ from typing import Any, Callable, Coroutine, Dict, TypeVar, cast
 import asyncpg
 import auraxium
 
-from ._dispatch import facility_control, player_blip, relative_player_blip
+from ._dispatch import base_control, player_blip, relative_player_blip
 
 # Type aliases
 _ActionT = TypeVar('_ActionT', bound=Callable[..., Coroutine[Any, Any, None]])
 
-# The list of world IDs to be tracked. See the facility_control handler for
+# The list of world IDs to be tracked. See the base_control handler for
 # details.
 _WORLDS = [
     1,  # Connery
@@ -97,7 +97,7 @@ class EventListener:
         # FacilityCapture
         self._arx_client.add_trigger(auraxium.Trigger(
             auraxium.EventType.FACILITY_CONTROL,
-            action=self.facility_control,
+            action=self.base_control,
             name='FacilityControl',
             # NOTE: Implicitly subscribing to all worlds is not permitted, so
             # we must subscribe to all of them individually.
@@ -122,7 +122,7 @@ class EventListener:
             self._dispatch_last_update = now
 
     @_log_errors
-    async def facility_control(self, event: auraxium.Event) -> None:
+    async def base_control(self, event: auraxium.Event) -> None:
         """Validate and dispatch facility captures.
 
         :param event: The event received.
@@ -138,8 +138,8 @@ class EventListener:
             int(event.payload['world_id']),
             int(event.payload['zone_id']))
         async with self._db_lock:
-            await facility_control(*blip, conn=self._db_conn)
-        self._push_dispatch('facility_control')
+            await base_control(*blip, conn=self._db_conn)
+        self._push_dispatch('base_control')
 
     @_log_errors
     async def player_blip(self, event: auraxium.Event) -> None:
@@ -156,7 +156,7 @@ class EventListener:
             int(event.payload['world_id']),
             int(event.payload['zone_id']))
         if player_id == 0:
-            log.warning('Unexpected character ID 0 in facility_control action')
+            log.warning('Unexpected character ID 0 in base_control action')
             return
         async with self._db_lock:
             await player_blip(*blip, conn=self._db_conn)

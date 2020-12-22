@@ -14,14 +14,15 @@ import datetime
 import asyncpg
 
 
-async def facility_control(timestamp: datetime.datetime, base_id: int,
-                           new_faction_id: int, old_faction_id: int,
-                           server_id: int, zone_id: int,
-                           conn: asyncpg.Connection) -> None:
-    """Dispatch a ``FacilityCapture`` blip to the database."""
+
+async def base_control(timestamp: datetime.datetime, base_id: int,
+                       new_faction_id: int, old_faction_id: int,
+                       server_id: int, continent_id: int,
+                       conn: asyncpg.Connection) -> None:
+    """Dispatch a ``BaseControl`` blip to the database."""
     await conn.execute(  # type: ignore
         """--sql
-        INSERT INTO blips."FacilityCapture" VALUES (
+        INSERT INTO blips."BaseControl" VALUES (
             $1, $2, $3, $4, $5, $6
         );""",
         timestamp, base_id, new_faction_id, old_faction_id, server_id, zone_id)
