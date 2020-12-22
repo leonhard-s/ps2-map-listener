@@ -143,7 +143,7 @@ class EventListener:
 
     @_log_errors
     async def player_blip(self, event: auraxium.Event) -> None:
-        """Validate and dispatch a :class:`PlayerBlip`.
+        """Validate and dispatch a ``PlayerBlip``.
 
         :param event: The event received.
 
@@ -164,7 +164,7 @@ class EventListener:
 
     @_log_errors
     async def relative_player_blip(self, event: auraxium.Event) -> None:
-        """Validate and dispatch a :class:`RelativePlayerBlip`.
+        """Validate and dispatch a ``RelativePlayerBlip``.
 
         :param event: The event received.
 
