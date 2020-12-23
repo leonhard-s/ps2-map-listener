@@ -35,7 +35,7 @@ async def main(service_id: str, db_host: str, db_user: str,
                db_pass: str, db_name: str) -> None:
     """Asynchronous component of the main listener script.
 
-    This coroutine acts much like the ``if __name__ == '__main___':``
+    This coroutine acts much like the ``if __name__ == '__main__':``
     clause below, but supports asynchronous methods.
 
     Arguments:
