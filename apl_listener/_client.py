@@ -1,9 +1,8 @@
 """Event listening client definition."""
 
-import asyncio
 import datetime
 import logging
-from typing import Any, Callable, Coroutine, Dict, Optional, TypeVar, cast
+from typing import Any, Callable, Coroutine, Dict, TypeVar, cast
 
 import asyncpg
 import auraxium
@@ -30,7 +29,7 @@ log = logging.getLogger('listener')
 
 async def _base_from_facility(facility_id: int,
                               conn: asyncpg.Connection) -> int:
-    row: Optional[Any] = await conn.fetchrow(  # type: ignore
+    row: Any = await conn.fetchrow(  # type: ignore
         """--sql
         SELECT
             ("id")
@@ -75,10 +74,9 @@ class EventListener:
 
     """
 
-    def __init__(self, service_id: str, conn: asyncpg.Connection) -> None:
+    def __init__(self, service_id: str, pool: asyncpg.pool.Pool) -> None:
         self._arx_client = auraxium.EventClient(service_id=service_id)
-        self._db_conn = conn
-        self._db_lock = asyncio.Lock()
+        self._db_pool = pool
         # This dictionary is used to keep track of the number of events
         # received
         self._dispatch_cache: Dict[str, int] = {}
@@ -151,20 +149,21 @@ class EventListener:
 
         """
         facility_id = int(event.payload['facility_id'])
-        try:
-            base_id = await _base_from_facility(facility_id, self._db_conn)
-        except ValueError:
-            log.debug('Ignoring invalid facility ID %d', facility_id)
-            return
-        blip = (
-            event.timestamp,
-            base_id,
-            int(event.payload['new_faction_id']),
-            int(event.payload['old_faction_id']),
-            int(event.payload['world_id']),
-            int(event.payload['zone_id']))
-        async with self._db_lock:
-            if await base_control(*blip, conn=self._db_conn):
+        conn: asyncpg.Connection
+        async with self._db_pool.acquire() as conn:  # type: ignore
+            try:
+                base_id = await _base_from_facility(facility_id, conn)
+            except ValueError:
+                log.debug('Ignoring invalid facility ID %d', facility_id)
+                return
+            blip = (
+                event.timestamp,
+                base_id,
+                int(event.payload['new_faction_id']),
+                int(event.payload['old_faction_id']),
+                int(event.payload['world_id']),
+                int(event.payload['zone_id']))
+            if await base_control(*blip, conn=conn):
                 self._push_dispatch('base_control')
 
     @_log_errors
@@ -184,8 +183,9 @@ class EventListener:
         if player_id == 0:
             log.warning('Unexpected character ID 0 in base_control action')
             return
-        async with self._db_lock:
-            if await player_blip(*blip, conn=self._db_conn):
+        conn: asyncpg.Connection
+        async with self._db_pool.acquire() as conn:  # type: ignore
+            if await player_blip(*blip, conn=conn):
                 self._push_dispatch('player_blip')
 
     @_log_errors
@@ -202,8 +202,9 @@ class EventListener:
         if player_id == 0:
             log.warning('Unexpected character ID 0 in player_logout action')
             return
-        async with self._db_lock:
-            if await player_logout(*blip, conn=self._db_conn):
+        conn: asyncpg.Connection
+        async with self._db_pool.acquire() as conn:  # type: ignore
+            if await player_logout(*blip, conn=conn):
                 self._push_dispatch('player_logout')
 
     @_log_errors
@@ -237,6 +238,7 @@ class EventListener:
                 log.warning(
                     'Unexpected character ID 0 in relative_player_blip action')
             return
-        async with self._db_lock:
-            if await relative_player_blip(*blip, conn=self._db_conn):
+        conn: asyncpg.Connection
+        async with self._db_pool.acquire() as conn:  # type: ignore
+            if await relative_player_blip(*blip, conn=conn):
                 self._push_dispatch('relative_player_blip')

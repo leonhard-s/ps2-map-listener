@@ -49,12 +49,13 @@ async def main(service_id: str, db_host: str, db_user: str,
     # Create database connection
     log.info('Connecting to database \'%s\' at %s as user \'%s\'...',
              db_name, db_host, db_user)
-    conn: asyncpg.Connection = await asyncpg.connect(  # type: ignore
+    pool: asyncpg.pool.Pool = asyncpg.create_pool(  # type: ignore
         user=db_user, password=db_pass, database=db_name, host=db_host)
+    await pool  # Initialise the pool
     log.info('Database connection successful')
     # Set up event client
     log.info('Preparing event listener...')
-    client = EventListener(service_id=service_id, conn=conn)
+    client = EventListener(service_id=service_id, pool=pool)
     # This try block catches any interrupts and ensures all of the components
     # are exited gracefully before the error gets thrown at the user's screen.
     try:
@@ -62,7 +63,7 @@ async def main(service_id: str, db_host: str, db_user: str,
     finally:
         log.error('An exception has occurred; closing connections...')
         log.info('Closing database connection...')
-        await conn.close()  # type: ignore
+        await pool.close()  # type: ignore
         log.info('Shutting down event listener...')
         await client.close()
 
