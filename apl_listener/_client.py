@@ -3,7 +3,7 @@
 import asyncio
 import datetime
 import logging
-from typing import Any, Callable, Coroutine, Dict, TypeVar, cast
+from typing import Any, Callable, Coroutine, Dict, Optional, TypeVar, cast
 
 import asyncpg
 import auraxium
@@ -26,6 +26,22 @@ _WORLDS = [
 ]
 
 log = logging.getLogger('listener')
+
+
+async def _base_from_facility(facility_id: int,
+                              conn: asyncpg.Connection) -> int:
+    row: Optional[Any] = await conn.fetchrow(  # type: ignore
+        """--sql
+        SELECT
+            ("id")
+        FROM
+            "autopl"."Base"
+        WHERE
+            "facility_id" = $1
+        ;""", facility_id)
+    if row is None:
+        raise ValueError(f'Invalid facility ID {facility_id}')
+    return int(tuple(row)[0])
 
 
 def _log_errors(func: _ActionT) -> _ActionT:
@@ -103,7 +119,7 @@ class EventListener:
             # NOTE: Implicitly subscribing to all worlds is not permitted, so
             # we must subscribe to all of them individually.
             worlds=_WORLDS))
-        # BaseControl
+        # PlayerLogout
         self._arx_client.add_trigger(auraxium.Trigger(
             auraxium.EventType.PLAYER_LOGOUT,
             action=self.player_logout,
@@ -134,13 +150,17 @@ class EventListener:
         :param event: The event received.
 
         """
+        facility_id = int(event.payload['facility_id'])
+        try:
+            base_id = await _base_from_facility(facility_id, self._db_conn)
+        except ValueError:
+            log.debug('Ignoring invalid facility ID %d', facility_id)
+            return
         blip = (
             event.timestamp,
-            int(event.payload['facility_id']),
-            # int(event.payload['duration_held']),
+            base_id,
             int(event.payload['new_faction_id']),
             int(event.payload['old_faction_id']),
-            # int(event.payload['outfit_id']),
             int(event.payload['world_id']),
             int(event.payload['zone_id']))
         async with self._db_lock:
