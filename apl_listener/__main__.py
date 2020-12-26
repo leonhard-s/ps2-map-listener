@@ -60,8 +60,9 @@ async def main(service_id: str, db_host: str, db_user: str,
     # are exited gracefully before the error gets thrown at the user's screen.
     try:
         await client.connect()
+    except BaseException:
+        log.exception('An exception has occurred; closing connections...')
     finally:
-        log.error('An exception has occurred; closing connections...')
         log.info('Closing database connection...')
         await pool.close()  # type: ignore
         log.info('Shutting down event listener...')
