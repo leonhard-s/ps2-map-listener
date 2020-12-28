@@ -13,16 +13,6 @@ from ._dispatch import (base_control, player_blip, player_logout,
 # Type aliases
 _ActionT = TypeVar('_ActionT', bound=Callable[..., Coroutine[Any, Any, None]])
 
-# The list of world IDs to be tracked. See the base_control handler for
-# details.
-_WORLDS = [
-    1,  # Connery
-    10,  # Miller
-    13,  # Cobalt
-    17,   # Emerald
-    25,  # Briggs
-    40  # SolTech
-]
 
 log = logging.getLogger('listener')
 
@@ -113,10 +103,7 @@ class EventListener:
         self._arx_client.add_trigger(auraxium.Trigger(
             auraxium.EventType.FACILITY_CONTROL,
             action=self.base_control,
-            name='FacilityControl',
-            # NOTE: Implicitly subscribing to all worlds is not permitted, so
-            # we must subscribe to all of them individually.
-            worlds=_WORLDS))
+            name='FacilityControl'))
         # PlayerLogout
         self._arx_client.add_trigger(auraxium.Trigger(
             auraxium.EventType.PLAYER_LOGOUT,
