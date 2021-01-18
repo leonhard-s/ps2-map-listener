@@ -6,7 +6,6 @@ cause issues when asynchronously called in rapid succession.
 Be sure to use a pooled connection or guard database access with a
 lock. These functions only act as helpers to segregate SQL interactions
 and Python objects.
-
 """
 
 import datetime
@@ -21,7 +20,7 @@ async def base_control(timestamp: datetime.datetime, base_id: int,
                        new_faction_id: int, old_faction_id: int,
                        server_id: int, continent_id: int,
                        conn: asyncpg.Connection) -> bool:
-    """Dispatch a ``BaseControl`` blip to the database."""
+    """Dispatch a ``BaseControl`` Blip to the database."""
     try:
         await conn.execute(  # type: ignore
             """--sql
@@ -48,7 +47,8 @@ async def player_blip(timestamp: datetime.datetime, player_id: int,
         await conn.execute(  # type: ignore
             """--sql
             INSERT INTO "event"."PlayerBlip" (
-                "timestamp", "server_id", "continent_id", "player_id", "base_id"
+                "timestamp", "server_id", "continent_id",
+                "player_id", "base_id"
             )
             VALUES (
                 $1, $2, $3, $4, $5
@@ -84,7 +84,7 @@ async def relative_player_blip(timestamp: datetime.datetime, player_a_id: int,
 
 async def player_logout(timestamp: datetime.datetime, player_id: int,
                         conn: asyncpg.Connection) -> bool:
-    """Dispatch a ``PlayerLogout`` blip to the database."""
+    """Dispatch a ``PlayerLogout`` Blip to the database."""
     await conn.execute(  # type: ignore
         """--sql
         INSERT INTO "event"."PlayerLogout" (

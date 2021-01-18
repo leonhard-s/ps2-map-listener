@@ -19,6 +19,14 @@ log = logging.getLogger('listener')
 
 async def _base_from_facility(facility_id: int,
                               conn: asyncpg.Connection) -> int:
+    """Get the base ID associated with a given facility.
+
+    Args:
+        facility_id (int): The facility ID received via the event
+            client.
+        conn (asyncpg.Connection): A preexisting database connection to
+            use for the conversion.
+    """
     row: Any = await conn.fetchrow(  # type: ignore
         """--sql
         SELECT
@@ -39,6 +47,11 @@ def _log_errors(func: _ActionT) -> _ActionT:
     Any exceptions raised within the given function will be suppressed
     and logged.
 
+    Args:
+        func (Coroutine): The function to wrap.
+
+    Returns:
+        Coroutine: Wrapper version of `func`.
     """
 
     async def wrapper(*args: Any, **kwargs: Any) -> None:
@@ -59,9 +72,20 @@ def _log_errors(func: _ActionT) -> _ActionT:
 class EventListener:
     """The APL event listener instance.
 
-    This class wraps an auraxium client to provide additional logging
-    information and define any event types required.
+    This class wraps an Auraxium event client, processes the responses
+    received and dispatches the corresponding Blips to the database.
 
+    Run :meth:`connect()` to run the event client. It is recommended to
+    do this via :meth:`asyncio.AbstractEventLoop.create_task()` as this
+    method will never return without error if awaited.
+
+    The event client can be shut down using the :meth:`close()`.
+
+    Args:
+        service_id (str): The Census API service ID to use for the
+            WebSocket connection.
+        pool (asyncpg.pool.Pool): A preexisting connection pool to use
+            for database interaction.
     """
 
     def __init__(self, service_id: str, pool: asyncpg.pool.Pool) -> None:
@@ -78,7 +102,12 @@ class EventListener:
         self._arx_client.triggers.clear()
 
     async def connect(self) -> None:
-        """Start the listener and keep it running."""
+        """Start the listener and keep it running.
+
+        Please note that this method does not return until the event
+        client encounters an exception or is closed via
+        :meth:`close()`.
+        """
         self._arx_client.triggers.clear()
         self._create_triggers()
         await self._arx_client.connect()
@@ -111,6 +140,14 @@ class EventListener:
             name='PlayerLogout'))
 
     def _push_dispatch(self, event_name: str) -> None:
+        """Utility method to collect debug information.
+
+        This groups events by name and logs the number of times each
+        has been encountered in the last five seconds.
+
+        Args:
+            event_name (str): The name of the event received.
+        """
         cache = self._dispatch_cache
         # Update dispatch cache
         try:
@@ -132,8 +169,8 @@ class EventListener:
     async def base_control(self, event: auraxium.Event) -> None:
         """Validate and dispatch facility captures.
 
-        :param event: The event received.
-
+        Args:
+            event (auraxium.Event): The event received.
         """
         facility_id = int(event.payload['facility_id'])
         conn: asyncpg.Connection
@@ -157,8 +194,8 @@ class EventListener:
     async def player_blip(self, event: auraxium.Event) -> None:
         """Validate and dispatch a ``PlayerBlip``.
 
-        :param event: The event received.
-
+        Args:
+            event (auraxium.Event): The event received.
         """
         player_id = int(event.payload['character_id'])
         blip = (
@@ -177,10 +214,10 @@ class EventListener:
 
     @_log_errors
     async def player_logout(self, event: auraxium.Event) -> None:
-        """Validate and dispatch a ``PlayerLogout`` blip.
+        """Validate and dispatch a ``PlayerLogout`` Blip.
 
-        :param event: The event received.
-
+        Args:
+            event (auraxium.Event): The event received.
         """
         player_id = int(event.payload['character_id'])
         blip = (
@@ -198,8 +235,8 @@ class EventListener:
     async def relative_player_blip(self, event: auraxium.Event) -> None:
         """Validate and dispatch a ``RelativePlayerBlip``.
 
-        :param event: The event received.
-
+        Args:
+            event (auraxium.Event): The event received.
         """
         if event.type == auraxium.EventType.DEATH:
             player_a_id = int(event.payload['attacker_character_id'])
