@@ -6,7 +6,6 @@ parse them for use in APL.
 
 Additionally, it includes a command line interface that will create and
 launch the listener. See its documentation for details.
-
 """
 
 from ._client import EventListener

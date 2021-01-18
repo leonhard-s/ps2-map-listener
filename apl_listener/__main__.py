@@ -5,7 +5,6 @@ the event listening client.
 
 For a list of command line arguments and their purpose, run this script
 with the ``--help`` flag set.
-
 """
 
 import argparse
@@ -38,13 +37,12 @@ async def main(service_id: str, db_host: str, db_user: str,
     This coroutine acts much like the ``if __name__ == '__main__':``
     clause below, but supports asynchronous methods.
 
-    Arguments:
-        service_id (str): The Census API service ID to use.
-        db_host (str): The host address of the PostgreSQL server.
-        db_user (str): The database username to log in as.
-        db_pass (str): The database password to use when logging in.
-        db_name (str): The name of the database to acces.
-
+    Args:
+        service_id (str): The census API service ID to use.
+        db_host (str): Host address of the PostgreSQL server.
+        db_user (str): Login user for the database server.
+        db_pass (str): Login password for the database server.
+        db_name (str): Name of the database to access.
     """
     # Create database connection
     log.info('Connecting to database \'%s\' at %s as user \'%s\'...',
