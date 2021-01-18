@@ -25,6 +25,13 @@ class TestOffline(unittest.IsolatedAsyncioTestCase):
         """Run after every individual test case."""
         apl_listener._client._base_from_facility = self._old_facility_converter
 
+    async def test_main(self) -> None:
+        """Check imports for the main bot script.
+
+        The CLI itself is not tested in any way.
+        """
+        from apl_listener import __main__
+
     async def test_connect(self) -> None:
         """Test the event client instantiation and connection."""
         TIMEOUT = 5.0

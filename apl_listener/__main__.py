@@ -31,7 +31,7 @@ sh_.setFormatter(fmt)
 
 
 async def main(service_id: str, db_host: str, db_user: str,
-               db_pass: str, db_name: str) -> None:
+               db_pass: str, db_name: str) -> None:  # pragma: no cover
     """Asynchronous component of the main listener script.
 
     This coroutine acts much like the ``if __name__ == '__main__':``
@@ -67,7 +67,7 @@ async def main(service_id: str, db_host: str, db_user: str,
         await client.close()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     # Define command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
