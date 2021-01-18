@@ -1,5 +1,9 @@
 # APL Listener
 
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/auto-pl/apl-listener/Run%20Python%20unit%20tests)
+[![Coveralls github branch](https://img.shields.io/coveralls/github/auto-pl/apl-listener/master)](https://coveralls.io/github/auto-pl/apl-listener)
+[![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/leonhard-s/auraxium)](https://www.codefactor.io/repository/github/auto-pl/apl-listener)
+
 This component is responsible for listening to WebSocket events received from the API and preparing the data for use in other components.
 
 ## What it does
