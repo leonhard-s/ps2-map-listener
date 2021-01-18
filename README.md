@@ -1,6 +1,6 @@
 # APL Listener
 
-This component is responsible for listening to websocket events received from the API and preparing the data for use in other components.
+This component is responsible for listening to WebSocket events received from the API and preparing the data for use in other components.
 
 ## What it does
 
