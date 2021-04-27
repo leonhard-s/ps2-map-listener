@@ -258,7 +258,7 @@ class EventListener:
             # These are therefore silently ignored without a log message as
             # they point to regular, common ingame events like killing oneself
             # or dying to spawn room pain fields.
-            if isinstance(evt, event.Death) or player_b_id == 0:
+            if (not isinstance(evt, event.Death)) or player_b_id == 0:
                 log.warning(
                     'Unexpected character ID 0 in relative_player_blip action')
             return
