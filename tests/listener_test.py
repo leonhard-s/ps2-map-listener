@@ -6,7 +6,7 @@ from unittest import mock
 
 import asyncpg
 
-import apl_listener  # pylint: disable=import-error
+import client  # pylint: disable=import-error
 
 
 class TestOffline(unittest.IsolatedAsyncioTestCase):
@@ -14,30 +14,30 @@ class TestOffline(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self) -> None:
         """Run before every individual test case."""
-        self._old_facility_converter = apl_listener._client._base_from_facility  # type: ignore
+        self._old_facility_converter = client._client._base_from_facility  # type: ignore
 
         async def dummy(*args: Any) -> int:
             return 0
 
-        apl_listener._client._base_from_facility = dummy  # type: ignore
+        client._client._base_from_facility = dummy  # type: ignore
 
     def tearDown(self) -> None:
         """Run after every individual test case."""
-        apl_listener._client._base_from_facility = self._old_facility_converter  # type: ignore
+        client._client._base_from_facility = self._old_facility_converter  # type: ignore
 
     async def test_main(self) -> None:
         """Check imports for the main bot script.
 
         The CLI itself is not tested in any way.
         """
-        from apl_listener import __main__
+        from client import __main__
 
     async def test_connect(self) -> None:
         """Test the event client instantiation and connection."""
         TIMEOUT = 5.0
         INTERVAL = 0.1
         pool = cast(asyncpg.pool.Pool, mock.MagicMock())
-        listener = apl_listener.EventListener('s:example', pool)
+        listener = client.EventListener('s:example', pool)
         asyncio.get_running_loop().create_task(listener.connect())
         for _ in range(round(TIMEOUT/INTERVAL)):
             if listener._dispatch_cache:  # type: ignore
