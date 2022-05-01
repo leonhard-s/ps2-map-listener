@@ -17,6 +17,10 @@ P = ParamSpec('P')
 
 log = logging.getLogger('listener')
 
+# Load SQL commands from file
+with open('sql/get_BaseIdFromFacilityId.sql', encoding='utf-8') as sql_file:
+    _BASE_ID_SQL = sql_file.read()
+
 
 @functools.lru_cache(maxsize=4096)
 async def _base_from_facility(facility_id: int, conn: Connection) -> int:
@@ -28,15 +32,8 @@ async def _base_from_facility(facility_id: int, conn: Connection) -> int:
         conn (asyncpg.Connection): A preexisting database connection to
             use for the conversion.
     """
-    row = await conn.fetchrow(
-        """--sql
-        SELECT
-            ("id")
-        FROM
-            "autopl"."Base"
-        WHERE
-            "facility_id" = $1
-        ;""", facility_id)
+    log.debug('Cache miss: Querying base ID for facility %d', facility_id)
+    row = await conn.fetchrow(_BASE_ID_SQL, facility_id)
     if row is None:
         raise ValueError(f'Invalid facility ID {facility_id}')
     return int(tuple(row)[0])
