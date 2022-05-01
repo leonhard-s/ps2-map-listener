@@ -71,7 +71,7 @@ def _log_errors(func: Callable[P, Coroutine[Any, Any, T]]
 
 
 class EventListener:
-    """The APL event listener instance.
+    """Main event listener instance.
 
     This class wraps an Auraxium event client, processes the responses
     received and dispatches the corresponding Blips to the database.

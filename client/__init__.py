@@ -1,11 +1,12 @@
-"""Event listener component of APL.
+"""Event listener for the map API stack.
 
-This module exports the :class:`EventListener` class, which will listen
-for websocket events sent by the PS2 event streaming endpoints and
-parse them for use in APL.
+This component handles the real-time WebSocket connection to the
+PlanetSide 2 API. It also filters the events, handles basic errors, and
+ensures the rest of the stack only sees tidy, sanitized data.
 
-Additionally, it includes a command line interface that will create and
-launch the listener. See its documentation for details.
+The :class:`EventListener` class is exported from this module, though
+the recommended way to use it is to call ``python -m client`` from the
+project directory.
 """
 
 from ._client import EventListener

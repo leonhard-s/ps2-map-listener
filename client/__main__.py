@@ -1,7 +1,8 @@
-"""Main script for launching the APL listener component.
+"""Main script for launching the event listener.
 
 This script sets up logging, connects to the database and instantiates
-the event listening client.
+the event listening client. It will immediately connect to the Census
+API and start offloading relevant events into the database.
 
 For a list of command line arguments and their purpose, run this script
 with the ``--help`` flag set.
@@ -20,7 +21,7 @@ log = logging.getLogger('listener')
 
 # Default database configuration
 DEFAULT_DB_HOST = '127.0.0.1'
-DEFAULT_DB_NAME = 'postgres'
+DEFAULT_DB_NAME = 'PS2Map'
 DEFAULT_DB_USER = 'postgres'
 
 # Logging configuration
@@ -70,11 +71,11 @@ async def main(service_id: str, db_host: str, db_user: str,
 
 if __name__ == '__main__':  # pragma: no cover
     # Get default values from environment
-    def_service_id = os.getenv('APL_SERVICE_ID', 's:example')
-    def_db_host = os.getenv('APL_DB_HOST', DEFAULT_DB_HOST)
-    def_db_name = os.getenv('APL_DB_NAME', DEFAULT_DB_NAME)
-    def_db_user = os.getenv('APL_DB_USER', DEFAULT_DB_USER)
-    def_db_pass = os.getenv('APL_DB_PASS')
+    def_service_id = os.getenv('PS2MAP_SERVICE_ID', 's:example')
+    def_db_host = os.getenv('PS2MAP_DB_HOST', DEFAULT_DB_HOST)
+    def_db_name = os.getenv('PS2MAP_DB_NAME', DEFAULT_DB_NAME)
+    def_db_user = os.getenv('PS2MAP_DB_USER', DEFAULT_DB_USER)
+    def_db_pass = os.getenv('PS2MAP_DB_PASS')
     # Define command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
