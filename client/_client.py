@@ -2,7 +2,7 @@
 
 import datetime
 import logging
-from typing import Any, Callable, Dict, ParamSpec, TypeVar
+from typing import Any, Callable, Coroutine, Dict, ParamSpec, TypeVar
 
 import auraxium
 from auraxium import event
@@ -11,8 +11,8 @@ from ._dispatch import (base_control, player_blip, player_logout,
                         relative_player_blip)
 from ._typing import Connection, Pool
 
-# Type aliases
-_ActionT = TypeVar('_ActionT', bound=Callable[..., Coroutine[Any, Any, None]])
+T = TypeVar('T')
+P = ParamSpec('P')
 
 log = logging.getLogger('listener')
 
@@ -40,20 +40,21 @@ async def _base_from_facility(facility_id: int, conn: Connection) -> int:
     return int(tuple(row)[0])
 
 
-def _log_errors(func: _ActionT) -> _ActionT:
-    """Error handler for the decorated function.
+def _log_errors(func: Callable[P, Coroutine[Any, Any, T]]
+                ) -> Callable[P, Coroutine[Any, Any, T | None]]:
+    """Error handler for event handling coroutines.
 
     Any exceptions raised within the given function will be suppressed
-    and logged.
+    and logged. On error, ``None`` will be returned.
 
     Args:
         func (Coroutine): The function to wrap.
 
     Returns:
-        Coroutine: Wrapper version of `func`.
+        Coroutine function: Wrapped version of `func`.
     """
 
-    async def wrapper(*args: Any, **kwargs: Any) -> None:
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T | None:
         try:
             return await func(*args, **kwargs)
         except ValueError as err:
@@ -62,10 +63,11 @@ def _log_errors(func: _ActionT) -> _ActionT:
                           '  Kwargs: %s',
                           func.__name__, args, kwargs)
         except BaseException as err:
-            # Fallback clause for generic exceptions
-            log.exception('Ignoring generic exception in \'%s\':', type(err))
+            log.exception('Ignoring generic exception in \'%s\': %s',
+                          func.__name__, type(err))
+        return None
 
-    return cast(_ActionT, wrapper)  # type: ignore
+    return wrapper
 
 
 class EventListener:
