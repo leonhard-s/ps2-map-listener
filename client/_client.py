@@ -1,6 +1,7 @@
 """Event listening client definition."""
 
 import datetime
+import functools
 import logging
 from typing import Any, Callable, Coroutine, Dict, ParamSpec, TypeVar
 
@@ -17,6 +18,7 @@ P = ParamSpec('P')
 log = logging.getLogger('listener')
 
 
+@functools.lru_cache(maxsize=4096)
 async def _base_from_facility(facility_id: int, conn: Connection) -> int:
     """Get the base ID associated with a given facility.
 
