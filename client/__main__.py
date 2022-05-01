@@ -48,7 +48,7 @@ async def main(service_id: str, db_host: str, db_user: str,
     # Create database connection
     log.info('Connecting to database \'%s\' at %s as user \'%s\'...',
              db_name, db_host, db_user)
-    pool: asyncpg.pool.Pool = asyncpg.create_pool(  # type: ignore
+    pool = asyncpg.create_pool(
         user=db_user, password=db_pass, database=db_name, host=db_host)
     await pool  # Initialise the pool
     log.info('Database connection successful')
@@ -63,7 +63,7 @@ async def main(service_id: str, db_host: str, db_user: str,
         log.exception('An exception has occurred; closing connections...')
     finally:
         log.info('Closing database connection...')
-        await pool.close()  # type: ignore
+        await pool.close()
         log.info('Shutting down event listener...')
         await client.close()
 

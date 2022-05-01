@@ -13,16 +13,18 @@ import logging
 
 import asyncpg
 
+from ._typing import Connection
+
 log = logging.getLogger('listener')
 
 
 async def base_control(timestamp: datetime.datetime, base_id: int,
                        new_faction_id: int, old_faction_id: int,
                        server_id: int, continent_id: int,
-                       conn: asyncpg.Connection) -> bool:
+                       conn: Connection) -> bool:
     """Dispatch a ``BaseControl`` Blip to the database."""
     try:
-        await conn.execute(  # type: ignore
+        await conn.execute(
             """--sql
             INSERT INTO "event"."BaseControl" (
                 "timestamp", "server_id", "continent_id", "base_id",
@@ -41,10 +43,10 @@ async def base_control(timestamp: datetime.datetime, base_id: int,
 
 async def player_blip(timestamp: datetime.datetime, player_id: int,
                       base_id: int, server_id: int, continent_id: int,
-                      conn: asyncpg.Connection) -> bool:
+                      conn: Connection) -> bool:
     """Dispatch a ``PlayerBlip`` to the database."""
     try:
-        await conn.execute(  # type: ignore
+        await conn.execute(
             """--sql
             INSERT INTO "event"."PlayerBlip" (
                 "timestamp", "server_id", "continent_id",
@@ -62,11 +64,11 @@ async def player_blip(timestamp: datetime.datetime, player_id: int,
 
 async def relative_player_blip(timestamp: datetime.datetime, player_a_id: int,
                                player_b_id: int, server_id: int,
-                               continent_id: int, conn: asyncpg.Connection
+                               continent_id: int, conn: Connection
                                ) -> bool:
     """Dispatch a ``RelativePlayerBlip`` to the database."""
     try:
-        await conn.execute(  # type: ignore
+        await conn.execute(
             """--sql
             INSERT INTO "event"."RelativePlayerBlip" (
                 "timestamp", "server_id", "continent_id",
@@ -83,9 +85,9 @@ async def relative_player_blip(timestamp: datetime.datetime, player_a_id: int,
 
 
 async def player_logout(timestamp: datetime.datetime, player_id: int,
-                        conn: asyncpg.Connection) -> bool:
+                        conn: Connection) -> bool:
     """Dispatch a ``PlayerLogout`` Blip to the database."""
-    await conn.execute(  # type: ignore
+    await conn.execute(
         """--sql
         INSERT INTO "event"."PlayerLogout" (
             "timestamp", "player_id"

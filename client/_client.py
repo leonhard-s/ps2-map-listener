@@ -2,14 +2,14 @@
 
 import datetime
 import logging
-from typing import Any, Callable, Coroutine, Dict, TypeVar, Union, cast
+from typing import Any, Callable, Dict, ParamSpec, TypeVar
 
-import asyncpg
 import auraxium
 from auraxium import event
 
 from ._dispatch import (base_control, player_blip, player_logout,
                         relative_player_blip)
+from ._typing import Connection, Pool
 
 # Type aliases
 _ActionT = TypeVar('_ActionT', bound=Callable[..., Coroutine[Any, Any, None]])
@@ -17,8 +17,7 @@ _ActionT = TypeVar('_ActionT', bound=Callable[..., Coroutine[Any, Any, None]])
 log = logging.getLogger('listener')
 
 
-async def _base_from_facility(facility_id: int,
-                              conn: asyncpg.Connection) -> int:
+async def _base_from_facility(facility_id: int, conn: Connection) -> int:
     """Get the base ID associated with a given facility.
 
     Args:
@@ -27,7 +26,7 @@ async def _base_from_facility(facility_id: int,
         conn (asyncpg.Connection): A preexisting database connection to
             use for the conversion.
     """
-    row: Any = await conn.fetchrow(  # type: ignore
+    row = await conn.fetchrow(
         """--sql
         SELECT
             ("id")
@@ -88,7 +87,7 @@ class EventListener:
             for database interaction.
     """
 
-    def __init__(self, service_id: str, pool: asyncpg.pool.Pool) -> None:
+    def __init__(self, service_id: str, pool: Pool) -> None:
         self._arx_client = auraxium.EventClient(service_id=service_id)
         self._db_pool = pool
         # This dictionary is used to keep track of the number of events
@@ -118,7 +117,7 @@ class EventListener:
         self._arx_client.add_trigger(auraxium.Trigger(
             event.PlayerFacilityCapture,
             event.PlayerFacilityDefend,
-            action=self.player_blip,  # type: ignore
+            action=self.player_blip,
             name='AbsolutePlayerBlip'))
         # Relative player blip
         self._arx_client.add_trigger(auraxium.Trigger(
@@ -126,17 +125,17 @@ class EventListener:
             event.GainExperience.filter_experience(4),  # Heal Player
             event.GainExperience.filter_experience(36),  # Spotting bonus
             event.GainExperience.filter_experience(54),  # Squad spotting bonus
-            action=self.relative_player_blip,  # type: ignore
+            action=self.relative_player_blip,
             name='RelativePlayerBlip'))
         # FacilityCapture
         self._arx_client.add_trigger(auraxium.Trigger(
             auraxium.event.FacilityControl,
-            action=self.base_control,  # type: ignore
+            action=self.base_control,
             name='FacilityControl'))
         # PlayerLogout
         self._arx_client.add_trigger(auraxium.Trigger(
             auraxium.event.PlayerLogout,
-            action=self.player_logout,  # type: ignore
+            action=self.player_logout,
             name='PlayerLogout'))
 
     def _push_dispatch(self, event_name: str) -> None:
@@ -166,40 +165,41 @@ class EventListener:
             self._dispatch_last_update = now
 
     @_log_errors
-    async def base_control(self, evt: event.FacilityControl) -> None:
+    async def base_control(self, evt: event.Event) -> None:
         """Validate and dispatch facility captures.
 
         Args:
-            event (event.FacilityControl): The event received.
+            event (event.Event): The event received.
         """
-        conn: asyncpg.Connection
-        async with self._db_pool.acquire() as conn:  # type: ignore
+        if not isinstance(evt, auraxium.event.FacilityControl):
+            return
+        async with self._db_pool.acquire() as conn:
             try:
                 base_id = await _base_from_facility(evt.facility_id, conn)
             except ValueError:
                 log.debug('Ignoring invalid facility ID %d', evt.facility_id)
                 return
-            blip = (
+            blip_data = (
                 evt.timestamp,
                 base_id,
                 evt.new_faction_id,
                 evt.old_faction_id,
                 evt.world_id,
                 evt.zone_id)
-            if await base_control(*blip, conn=conn):
+            if await base_control(*blip_data, conn=conn):
                 self._push_dispatch('base_control')
 
     @_log_errors
-    async def player_blip(
-            self,
-            evt: Union[event.PlayerFacilityCapture, event.PlayerFacilityDefend]
-    ) -> None:
+    async def player_blip(self, evt: event.Event) -> None:
         """Validate and dispatch a ``PlayerBlip``.
 
         Args:
             event (event.Event): The event received.
         """
-        blip = (
+        if not isinstance(evt, (event.PlayerFacilityCapture,
+                                event.PlayerFacilityDefend)):
+            return
+        blip_data = (
             evt.timestamp,
             evt.character_id,
             evt.facility_id,
@@ -208,44 +208,45 @@ class EventListener:
         if evt.character_id == 0:
             log.warning('Unexpected character ID 0 in base_control action')
             return
-        conn: asyncpg.Connection
-        async with self._db_pool.acquire() as conn:  # type: ignore
-            if await player_blip(*blip, conn=conn):
+        async with self._db_pool.acquire() as conn:
+            if await player_blip(*blip_data, conn=conn):
                 self._push_dispatch('player_blip')
 
     @_log_errors
-    async def player_logout(self, evt: event.PlayerLogout) -> None:
+    async def player_logout(self, evt: event.Event) -> None:
         """Validate and dispatch a ``PlayerLogout`` Blip.
 
         Args:
-            event (event.PlayerLogout): The event received.
+            event (event.Event): The event received.
         """
-        blip = (
+        if not isinstance(evt, auraxium.event.PlayerLogout):
+            return
+        blip_data = (
             evt.timestamp,
             evt.character_id)
         if evt.character_id == 0:
             log.warning('Unexpected character ID 0 in player_logout action')
             return
-        conn: asyncpg.Connection
-        async with self._db_pool.acquire() as conn:  # type: ignore
-            if await player_logout(*blip, conn=conn):
+        async with self._db_pool.acquire() as conn:
+            if await player_logout(*blip_data, conn=conn):
                 self._push_dispatch('player_logout')
 
     @_log_errors
-    async def relative_player_blip(
-            self, evt: Union[event.Death, event.GainExperience]) -> None:
+    async def relative_player_blip(self, evt: event.Event) -> None:
         """Validate and dispatch a ``RelativePlayerBlip``.
 
         Args:
             evt (event.Event): The event received.
         """
+        if not isinstance(evt, (event.Death, event.GainExperience)):
+            return
         if isinstance(evt, event.Death):
             player_a_id = evt.attacker_character_id
             player_b_id = evt.character_id
         else:
             player_a_id = evt.character_id
             player_b_id = evt.other_id
-        blip = (
+        blip_data = (
             evt.timestamp,
             player_a_id,
             player_b_id,
@@ -262,7 +263,6 @@ class EventListener:
                 log.warning(
                     'Unexpected character ID 0 in relative_player_blip action')
             return
-        conn: asyncpg.Connection
-        async with self._db_pool.acquire() as conn:  # type: ignore
-            if await relative_player_blip(*blip, conn=conn):
+        async with self._db_pool.acquire() as conn:
+            if await relative_player_blip(*blip_data, conn=conn):
                 self._push_dispatch('relative_player_blip')
