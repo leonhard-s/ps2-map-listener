@@ -3,7 +3,7 @@
 import datetime
 import functools
 import logging
-from typing import Any, Callable, Coroutine, Dict, ParamSpec, TypeVar
+from typing import Any, Callable, Coroutine, ParamSpec, TypeVar
 
 import auraxium
 from auraxium import event
@@ -93,7 +93,7 @@ class EventListener:
         self._db_pool = pool
         # This dictionary is used to keep track of the number of events
         # received
-        self._dispatch_cache: Dict[str, int] = {}
+        self._dispatch_cache: dict[str, int] = {}
         self._dispatch_last_update = datetime.datetime.now()
 
     async def close(self) -> None:
