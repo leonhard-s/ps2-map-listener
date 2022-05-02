@@ -56,12 +56,12 @@ def _log_errors(func: Callable[P, Coroutine[Any, Any, T]]
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T | None:
         try:
             return await func(*args, **kwargs)
-        except ValueError as err:
+        except ValueError:
             log.exception('Argument conversion error in \'%s\':\n'
                           '  Args: %s\n'
                           '  Kwargs: %s',
                           func.__name__, args, kwargs)
-        except BaseException as err:
+        except BaseException as err:  # pylint: disable=broad-except
             log.exception('Ignoring generic exception in \'%s\': %s',
                           func.__name__, type(err))
         return None
