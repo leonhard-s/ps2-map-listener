@@ -3,7 +3,7 @@ SELECT (
     "id"
 )
 FROM
-    "PS2Map"."Public"
+    "API"."Base"
 WHERE
     "facility_id" = $1
 ;

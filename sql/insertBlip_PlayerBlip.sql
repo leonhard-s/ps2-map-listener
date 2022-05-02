@@ -1,5 +1,5 @@
 -- Store a PlayerBlip in the database
-INSERT INTO "event"."PlayerBlip" (
+INSERT INTO "Blip"."PlayerBlip" (
     "timestamp",
     "server_id",
     "continent_id",

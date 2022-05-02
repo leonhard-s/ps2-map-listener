@@ -1,5 +1,5 @@
 -- Store a PlayerLogout blip in the database
-INSERT INTO "event"."PlayerLogout" (
+INSERT INTO "Blip"."PlayerLogout" (
     "timestamp", 
     "player_id"
 )

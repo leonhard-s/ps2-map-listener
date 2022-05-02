@@ -1,5 +1,5 @@
 -- Store a RelativePlayerBlip in the database
-INSERT INTO "event"."RelativePlayerBlip" (
+INSERT INTO "Blip"."RelativePlayerBlip" (
     "timestamp",
     "server_id",
     "continent_id",
