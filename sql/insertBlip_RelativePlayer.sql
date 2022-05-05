@@ -7,5 +7,5 @@ INSERT INTO "Blip"."RelativePlayerBlip" (
     "player_b_id"
 )
 VALUES (
-    $1, $2, $3, $4, $5
+    %s, %s, %s, %s, %s
 );

@@ -13,8 +13,7 @@ import asyncio
 import logging
 import os
 
-import asyncpg
-
+from ._db import create_pool
 from ._client import EventListener
 
 log = logging.getLogger('listener')
@@ -51,8 +50,7 @@ async def main(service_id: str, db_host: str, db_port: int, db_user: str,
     # Create database connection
     log.info('Connecting to database \'%s\' at %s as user \'%s\'...',
              db_name, db_host, db_user)
-    pool = db.create_pool(db_host, db_port, db_user,  db_pass, db_name)
-    await pool  # Initialise the pool
+    pool = create_pool(db_host, db_port, db_user,  db_pass, db_name)
     log.info('Database connection successful')
     # Set up event client
     log.info('Preparing event listener...')
@@ -71,6 +69,9 @@ async def main(service_id: str, db_host: str, db_port: int, db_user: str,
 
 
 if __name__ == '__main__':  # pragma: no cover
+    asyncio.set_event_loop_policy(
+        asyncio.WindowsSelectorEventLoopPolicy()
+    )
     # Get default values from environment
     def_service_id = os.getenv('PS2MAP_SERVICE_ID', 's:example')
     def_db_host = os.getenv('PS2MAP_DB_HOST', DEFAULT_DB_HOST)
@@ -93,7 +94,7 @@ if __name__ == '__main__':  # pragma: no cover
         '--db-host', '-H', default=def_db_host,
         help='The address of the database host')
     parser.add_argument(
-        '--db-port', '-P', default=def_db_port,
+        '--db-port', '-T', default=def_db_port,
         help='The port of the database host')
     parser.add_argument(
         '--db-name', '-N', default=def_db_name,

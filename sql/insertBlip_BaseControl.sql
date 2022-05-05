@@ -8,5 +8,5 @@ INSERT INTO "Blip"."BaseControl" (
     "new_faction_id"
 )
 VALUES (
-    $1, $2, $3, $4, $5, $6
+    %s, %s, %s, %s, %s, %s
 );

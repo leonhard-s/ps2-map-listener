@@ -4,5 +4,5 @@ INSERT INTO "Blip"."PlayerLogout" (
     "player_id"
 )
 VALUES (
-    $1, $2
+    %s, %s
 );
