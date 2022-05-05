@@ -1,10 +1,8 @@
 """Event listening client definition."""
 
 import datetime
-import functools
 import logging
-import typing
-from typing import Any, Callable, Coroutine, ParamSpec, TypeVar
+from typing import Any, Callable, Coroutine, ParamSpec, TypeVar, cast
 
 import auraxium
 from auraxium import event
@@ -19,8 +17,9 @@ P = ParamSpec('P')
 
 log = logging.getLogger('listener')
 
+_facility_base_cache: dict[int, int] = {}
 
-@functools.lru_cache(maxsize=4096)
+
 async def _base_from_facility(facility_id: int, conn: Connection[Row]) -> int:
     """Get the base ID associated with a given facility.
 
@@ -30,13 +29,16 @@ async def _base_from_facility(facility_id: int, conn: Connection[Row]) -> int:
         conn (Connection): A preexisting database connection to use for
             the conversion.
     """
-    log.debug('Cache miss: Querying base ID for facility %d', facility_id)
-    async with conn.cursor() as cursor:
-        await cursor.execute(BASE_ID_SQL, (facility_id,))
-        row = await cursor.fetchone()
-    if row is None:
-        raise ValueError(f'Invalid facility ID {facility_id}')
-    return int(tuple(typing.cast(typing.Any, row))[0])
+    if facility_id not in _facility_base_cache:
+        log.debug('Cache miss: Querying base ID for facility %d', facility_id)
+        async with conn.cursor() as cursor:
+            await cursor.execute(BASE_ID_SQL, (facility_id,))
+            row = await cursor.fetchone()
+        if row is None:
+            raise ValueError(f'Invalid facility ID {facility_id}')
+        base_id = int(tuple(cast(Any, row))[0])
+        _facility_base_cache[facility_id] = base_id
+    return _facility_base_cache[facility_id]
 
 
 def _log_errors(func: Callable[P, Coroutine[Any, Any, T]]
@@ -156,11 +158,11 @@ class EventListener:
             cache[event_name] = 1
         # Push the current status to the user every 5 seconds
         now = datetime.datetime.now()
-        if now >= self._dispatch_last_update + datetime.timedelta(seconds=5.0):
+        if now >= self._dispatch_last_update + datetime.timedelta(seconds=30.0):
             if log.getEffectiveLevel() <= logging.INFO:
                 data = sorted((f'{k}: {v}' for k, v in cache.items()))
                 total = sum(cache.values())
-                log.info('Sent %d events over the last 5 seconds:\n\t%s',
+                log.info('Sent %d events over the last 30 seconds:\n\t%s',
                          total, '\n\t'.join(data))
             cache.clear()
             self._dispatch_last_update = now
