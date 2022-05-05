@@ -3,40 +3,40 @@
 import datetime
 import functools
 import logging
+import typing
 from typing import Any, Callable, Coroutine, ParamSpec, TypeVar
 
 import auraxium
 from auraxium import event
 
+from ._db import Connection, Pool, Row
 from ._dispatch import (base_control, player_blip, player_logout,
                         relative_player_blip)
-from ._typing import Connection, Pool
+from ._sql import BASE_ID_SQL
 
 T = TypeVar('T')
 P = ParamSpec('P')
 
 log = logging.getLogger('listener')
 
-# Load SQL commands from file
-with open('sql/get_BaseIdFromFacilityId.sql', encoding='utf-8') as sql_file:
-    _BASE_ID_SQL = sql_file.read()
-
 
 @functools.lru_cache(maxsize=4096)
-async def _base_from_facility(facility_id: int, conn: Connection) -> int:
+async def _base_from_facility(facility_id: int, conn: Connection[Row]) -> int:
     """Get the base ID associated with a given facility.
 
     Args:
         facility_id (int): The facility ID received via the event
             client.
-        conn (asyncpg.Connection): A preexisting database connection to
-            use for the conversion.
+        conn (Connection): A preexisting database connection to use for
+            the conversion.
     """
     log.debug('Cache miss: Querying base ID for facility %d', facility_id)
-    row = await conn.fetchrow(_BASE_ID_SQL, facility_id)
+    async with conn.cursor() as cursor:
+        await cursor.execute(BASE_ID_SQL, (facility_id,))
+        row = await cursor.fetchone()
     if row is None:
         raise ValueError(f'Invalid facility ID {facility_id}')
-    return int(tuple(row)[0])
+    return int(tuple(typing.cast(typing.Any, row))[0])
 
 
 def _log_errors(func: Callable[P, Coroutine[Any, Any, T]]
@@ -84,8 +84,8 @@ class EventListener:
     Args:
         service_id (str): The Census API service ID to use for the
             WebSocket connection.
-        pool (asyncpg.pool.Pool): A preexisting connection pool to use
-            for database interaction.
+        pool (Pool): A preexisting connection pool to use for database
+            interaction.
     """
 
     def __init__(self, service_id: str, pool: Pool) -> None:
@@ -114,30 +114,30 @@ class EventListener:
 
     def _create_triggers(self) -> None:
         """Create and register all event triggers for the listener."""
-        # Absolute player blips
-        self._arx_client.add_trigger(auraxium.Trigger(
-            event.PlayerFacilityCapture,
-            event.PlayerFacilityDefend,
-            action=self.player_blip,
-            name='AbsolutePlayerBlip'))
-        # Relative player blip
-        self._arx_client.add_trigger(auraxium.Trigger(
-            event.Death,
-            event.GainExperience.filter_experience(4),  # Heal Player
-            event.GainExperience.filter_experience(36),  # Spotting bonus
-            event.GainExperience.filter_experience(54),  # Squad spotting bonus
-            action=self.relative_player_blip,
-            name='RelativePlayerBlip'))
+        # # Absolute player blips
+        # self._arx_client.add_trigger(auraxium.Trigger(
+        #     event.PlayerFacilityCapture,
+        #     event.PlayerFacilityDefend,
+        #     action=self.player_blip,
+        #     name='AbsolutePlayerBlip'))
+        # # Relative player blip
+        # self._arx_client.add_trigger(auraxium.Trigger(
+        #     event.Death,
+        #     event.GainExperience.filter_experience(4),  # Heal Player
+        #     event.GainExperience.filter_experience(36),  # Spotting bonus
+        #     event.GainExperience.filter_experience(54),  # Squad spotting bonus
+        #     action=self.relative_player_blip,
+        #     name='RelativePlayerBlip'))
         # FacilityCapture
         self._arx_client.add_trigger(auraxium.Trigger(
             auraxium.event.FacilityControl,
             action=self.base_control,
             name='FacilityControl'))
-        # PlayerLogout
-        self._arx_client.add_trigger(auraxium.Trigger(
-            auraxium.event.PlayerLogout,
-            action=self.player_logout,
-            name='PlayerLogout'))
+        # # PlayerLogout
+        # self._arx_client.add_trigger(auraxium.Trigger(
+        #     auraxium.event.PlayerLogout,
+        #     action=self.player_logout,
+        #     name='PlayerLogout'))
 
     def _push_dispatch(self, event_name: str) -> None:
         """Utility method to collect debug information.
@@ -174,7 +174,7 @@ class EventListener:
         """
         if not isinstance(evt, auraxium.event.FacilityControl):
             return
-        async with self._db_pool.acquire() as conn:
+        async with self._db_pool.connection() as conn:
             try:
                 base_id = await _base_from_facility(evt.facility_id, conn)
             except ValueError:
@@ -209,7 +209,7 @@ class EventListener:
         if evt.character_id == 0:
             log.warning('Unexpected character ID 0 in base_control action')
             return
-        async with self._db_pool.acquire() as conn:
+        async with self._db_pool.connection() as conn:
             if await player_blip(*blip_data, conn=conn):
                 self._push_dispatch('player_blip')
 
@@ -228,7 +228,7 @@ class EventListener:
         if evt.character_id == 0:
             log.warning('Unexpected character ID 0 in player_logout action')
             return
-        async with self._db_pool.acquire() as conn:
+        async with self._db_pool.connection() as conn:
             if await player_logout(*blip_data, conn=conn):
                 self._push_dispatch('player_logout')
 
@@ -264,6 +264,6 @@ class EventListener:
                 log.warning(
                     'Unexpected character ID 0 in relative_player_blip action')
             return
-        async with self._db_pool.acquire() as conn:
+        async with self._db_pool.connection() as conn:
             if await relative_player_blip(*blip_data, conn=conn):
                 self._push_dispatch('relative_player_blip')

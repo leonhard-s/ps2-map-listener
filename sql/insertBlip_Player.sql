@@ -7,5 +7,5 @@ INSERT INTO "Blip"."PlayerBlip" (
     "base_id"
 )
 VALUES (
-    $1, $2, $3, $4, $5
+    %s, %s, %s, %s, %s
 );

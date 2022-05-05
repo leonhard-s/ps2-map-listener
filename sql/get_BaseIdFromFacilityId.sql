@@ -5,5 +5,5 @@ SELECT (
 FROM
     "API"."Base"
 WHERE
-    "facility_id" = $1
+    "facility_id" = %s
 ;
