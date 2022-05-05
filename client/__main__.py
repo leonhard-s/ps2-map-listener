@@ -21,6 +21,7 @@ log = logging.getLogger('listener')
 
 # Default database configuration
 DEFAULT_DB_HOST = '127.0.0.1'
+DEFAULT_DB_PORT = 5432
 DEFAULT_DB_NAME = 'PS2Map'
 DEFAULT_DB_USER = 'postgres'
 
@@ -32,7 +33,7 @@ fh_.setFormatter(fmt)
 sh_.setFormatter(fmt)
 
 
-async def main(service_id: str, db_host: str, db_user: str,
+async def main(service_id: str, db_host: str, db_port: int, db_user: str,
                db_pass: str, db_name: str) -> None:  # pragma: no cover
     """Asynchronous component of the main listener script.
 
@@ -41,7 +42,8 @@ async def main(service_id: str, db_host: str, db_user: str,
 
     Args:
         service_id (str): The census API service ID to use.
-        db_host (str): Host address of the PostgreSQL server.
+        db_host (str): Host address of the database server.
+        db_port (str): Port of the database server.
         db_user (str): Login user for the database server.
         db_pass (str): Login password for the database server.
         db_name (str): Name of the database to access.
@@ -49,8 +51,7 @@ async def main(service_id: str, db_host: str, db_user: str,
     # Create database connection
     log.info('Connecting to database \'%s\' at %s as user \'%s\'...',
              db_name, db_host, db_user)
-    pool = asyncpg.create_pool(
-        user=db_user, password=db_pass, database=db_name, host=db_host)
+    pool = db.create_pool(db_host, db_port, db_user,  db_pass, db_name)
     await pool  # Initialise the pool
     log.info('Database connection successful')
     # Set up event client
@@ -73,6 +74,7 @@ if __name__ == '__main__':  # pragma: no cover
     # Get default values from environment
     def_service_id = os.getenv('PS2MAP_SERVICE_ID', 's:example')
     def_db_host = os.getenv('PS2MAP_DB_HOST', DEFAULT_DB_HOST)
+    def_db_port = int(os.getenv('PS2MAP_DB_PORT', str(DEFAULT_DB_PORT)))
     def_db_name = os.getenv('PS2MAP_DB_NAME', DEFAULT_DB_NAME)
     def_db_user = os.getenv('PS2MAP_DB_USER', DEFAULT_DB_USER)
     def_db_pass = os.getenv('PS2MAP_DB_PASS')
@@ -90,6 +92,9 @@ if __name__ == '__main__':  # pragma: no cover
     parser.add_argument(
         '--db-host', '-H', default=def_db_host,
         help='The address of the database host')
+    parser.add_argument(
+        '--db-port', '-P', default=def_db_port,
+        help='The port of the database host')
     parser.add_argument(
         '--db-name', '-N', default=def_db_name,
         help='The name of the database to access')
