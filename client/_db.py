@@ -24,6 +24,7 @@ Pool = psycopg_pool.AsyncConnectionPool
 
 # Errors
 ForeignKeyViolation = psycopg.errors.ForeignKeyViolation
+UniqueViolation = psycopg.errors.UniqueViolation
 
 
 def create_pool(host: str, port: int, user: str, password: str,

@@ -11,9 +11,9 @@ and Python objects.
 import datetime
 import logging
 
-from ._db import Connection, ForeignKeyViolation, Row
-from ._sql import (SQL_BASE_CONTROL, SQL_PLAYER, SQL_RELATIVE_PLAYER,
-                   SQL_PLAYER_LOGOUT)
+from ._db import Connection, ForeignKeyViolation, Row, UniqueViolation
+from ._sql import (SQL_BASE_CONTROL, SQL_DROP_BASE_CONTROL, SQL_PLAYER,
+                   SQL_RELATIVE_PLAYER, SQL_PLAYER_LOGOUT)
 
 
 log = logging.getLogger('listener')
@@ -25,6 +25,14 @@ async def base_control(timestamp: datetime.datetime, base_id: int,
                        conn: Connection[Row]) -> bool:
     """Dispatch a ``BaseControl`` Blip to the database."""
     try:
+        await conn.execute(
+            SQL_BASE_CONTROL, (timestamp, server_id, continent_id, base_id,
+                               old_faction_id, new_faction_id))
+    except UniqueViolation:
+        log.info('Received duplicate BaseControl Blip for %s:\t%s -> %s',
+                 base_id, old_faction_id, new_faction_id)
+        await conn.execute(
+            SQL_DROP_BASE_CONTROL, (timestamp, server_id, base_id))
         await conn.execute(
             SQL_BASE_CONTROL, (timestamp, server_id, continent_id, base_id,
                                old_faction_id, new_faction_id))

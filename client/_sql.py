@@ -5,6 +5,7 @@ import os
 __all__ = [
     'BASE_ID_SQL',
     'SQL_BASE_CONTROL',
+    'SQL_DROP_BASE_CONTROL',
     'SQL_PLAYER',
     'SQL_RELATIVE_PLAYER',
     'SQL_PLAYER_LOGOUT',
@@ -23,6 +24,7 @@ def _get_sql(filename: str) -> str:
 
 BASE_ID_SQL = _get_sql('get_BaseIdFromFacilityId.sql')
 SQL_BASE_CONTROL = _get_sql('insertBlip_BaseControl.sql')
+SQL_DROP_BASE_CONTROL = _get_sql('dropBlip_BaseControl.sql')
 SQL_PLAYER = _get_sql('insertBlip_Player.sql')
 SQL_RELATIVE_PLAYER = _get_sql('insertBlip_RelativePlayer.sql')
 SQL_PLAYER_LOGOUT = _get_sql('insertBlip_PlayerLogout.sql')
