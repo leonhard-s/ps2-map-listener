@@ -91,7 +91,8 @@ class EventListener:
     """
 
     def __init__(self, service_id: str, pool: Pool) -> None:
-        self._arx_client = auraxium.EventClient(service_id=service_id)
+        self._arx_client = auraxium.EventClient(
+            service_id=service_id, no_ssl_certs=True)
         self._db_pool = pool
         # This dictionary is used to keep track of the number of events
         # received
