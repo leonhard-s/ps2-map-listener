@@ -160,7 +160,7 @@ class EventListener:
         # Push the current status to the user every 5 seconds
         now = datetime.datetime.now()
         if now >= self._dispatch_last_update + datetime.timedelta(seconds=30.0):
-            if log.getEffectiveLevel() <= logging.INFO:
+            if log.getEffectiveLevel() <= logging.DEBUG:
                 data = sorted((f'{k}: {v}' for k, v in cache.items()))
                 total = sum(cache.values())
                 log.info('Sent %d events over the last 30 seconds:\n\t%s',
