@@ -3,7 +3,7 @@ SELECT (
     "id"
 )
 FROM
-    "API"."Base"
+    "API_static"."Base"
 WHERE
     "facility_id" = %s
 ;
