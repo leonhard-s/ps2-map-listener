@@ -22,6 +22,7 @@ def _get_sql(filename: str) -> str:
 
 
 BASE_ID_SQL = _get_sql('get_BaseIdFromFacilityId.sql')
+GET_SERVER_ALL_TRACKED = _get_sql('get_Server_allTracked.sql')
 SQL_BASE_CONTROL = _get_sql('insertBlip_BaseControl.sql')
 SQL_PLAYER = _get_sql('insertBlip_Player.sql')
 SQL_RELATIVE_PLAYER = _get_sql('insertBlip_RelativePlayer.sql')

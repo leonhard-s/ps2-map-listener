@@ -10,7 +10,7 @@ from auraxium import event
 from ._db import Connection, Pool, Row
 from ._dispatch import (base_control, player_blip, player_logout,
                         relative_player_blip)
-from ._sql import BASE_ID_SQL
+from ._sql import BASE_ID_SQL, GET_SERVER_ALL_TRACKED
 
 T = TypeVar('T')
 P = ParamSpec('P')
@@ -112,11 +112,12 @@ class EventListener:
         :meth:`close()`.
         """
         self._arx_client.triggers.clear()
-        self._create_triggers()
+        await self._create_triggers()
         await self._arx_client.connect()
 
-    def _create_triggers(self) -> None:
+    async def _create_triggers(self) -> None:
         """Create and register all event triggers for the listener."""
+        worlds = await self._get_tracked_servers()
         # # Absolute player blips
         # self._arx_client.add_trigger(auraxium.Trigger(
         #     event.PlayerFacilityCapture,
@@ -134,6 +135,7 @@ class EventListener:
         # FacilityCapture
         self._arx_client.add_trigger(auraxium.Trigger(
             auraxium.event.FacilityControl,
+            worlds=worlds,
             action=self.base_control,
             name='FacilityControl'))
         # # PlayerLogout
@@ -141,6 +143,13 @@ class EventListener:
         #     auraxium.event.PlayerLogout,
         #     action=self.player_logout,
         #     name='PlayerLogout'))
+
+    async def _get_tracked_servers(self) -> list[int]:
+        """Return an explicit list of all tracked servers."""
+        async with self._db_pool.connection() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(GET_SERVER_ALL_TRACKED)
+                return [int(row[0]) for row in await cursor.fetchall()]
 
     def _push_dispatch(self, event_name: str) -> None:
         """Utility method to collect debug information.
