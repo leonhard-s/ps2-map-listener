@@ -28,6 +28,7 @@ async def _base_from_facility(facility_id: int, conn: Connection[Row]) -> int:
             client.
         conn (Connection): A preexisting database connection to use for
             the conversion.
+
     """
     if facility_id not in _facility_base_cache:
         log.debug('Cache miss: Querying base ID for facility %d', facility_id)
@@ -53,6 +54,7 @@ def _log_errors(func: Callable[P, Coroutine[Any, Any, T]]
 
     Returns:
         Coroutine function: Wrapped version of `func`.
+
     """
 
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T | None:
@@ -88,6 +90,7 @@ class EventListener:
             WebSocket connection.
         pool (Pool): A preexisting connection pool to use for database
             interaction.
+
     """
 
     def __init__(self, service_id: str, pool: Pool) -> None:
@@ -159,6 +162,7 @@ class EventListener:
 
         Args:
             event_name (str): The name of the event received.
+
         """
         cache = self._dispatch_cache
         # Update dispatch cache
@@ -183,6 +187,7 @@ class EventListener:
 
         Args:
             event (event.Event): The event received.
+
         """
         if not isinstance(evt, auraxium.event.FacilityControl):
             return
@@ -208,6 +213,7 @@ class EventListener:
 
         Args:
             event (event.Event): The event received.
+
         """
         if not isinstance(evt, (event.PlayerFacilityCapture,
                                 event.PlayerFacilityDefend)):
@@ -231,6 +237,7 @@ class EventListener:
 
         Args:
             event (event.Event): The event received.
+
         """
         if not isinstance(evt, auraxium.event.PlayerLogout):
             return
@@ -250,6 +257,7 @@ class EventListener:
 
         Args:
             evt (event.Event): The event received.
+
         """
         if not isinstance(evt, (event.Death, event.GainExperience)):
             return

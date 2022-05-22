@@ -46,6 +46,7 @@ async def main(service_id: str, db_host: str, db_port: int, db_user: str,
         db_user (str): Login user for the database server.
         db_pass (str): Login password for the database server.
         db_name (str): Name of the database to access.
+
     """
     # Create database connection
     log.info('Connecting to database \'%s\' at %s as user \'%s\'...',
@@ -70,8 +71,7 @@ async def main(service_id: str, db_host: str, db_port: int, db_user: str,
 
 if __name__ == '__main__':  # pragma: no cover
     asyncio.set_event_loop_policy(
-        asyncio.WindowsSelectorEventLoopPolicy()
-    )
+        asyncio.WindowsSelectorEventLoopPolicy())
     # Get default values from environment
     def_service_id = os.getenv('PS2MAP_SERVICE_ID', 's:example')
     def_db_host = os.getenv('PS2MAP_DB_HOST', DEFAULT_DB_HOST)
