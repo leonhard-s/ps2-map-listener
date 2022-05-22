@@ -1,5 +1,5 @@
 -- Store a BaseControl blip in the database
-INSERT INTO "Blip"."BaseControl" (
+INSERT INTO "EventBuffer"."BaseControl" (
     "timestamp",
     "server_id",
     "continent_id",

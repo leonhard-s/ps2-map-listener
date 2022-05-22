@@ -1,5 +1,5 @@
 -- Update a BaseControl blip in the database
-DELETE FROM "Blip"."BaseControl"
+DELETE FROM "EventBuffer"."BaseControl"
 WHERE
     "timestamp" = %s
 AND

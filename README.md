@@ -9,7 +9,7 @@ This component is responsible for listening to WebSocket events received from th
 
 This script subscribes to events through [Auraxium](https://github.com/leonhard-s/auraxium), which takes care of maintaining the streaming connection and handling disconnects or other API errors.
 
-The events received from the PS2 API are generally too specific for our needs, lack important data and do not match our requirements. They are therefore processed and split up or combined into our own internal event definitions, called "Blips".
+The events received from the PS2 API are generally too specific for our needs, lack important data and do not match our requirements. They are therefore processed and split up or combined into our own internal event definitions, called "EventBuffer".
 
 These Blips are then inserted into the separate `event` schema of the database, which mostly acts as intermediate storage between components. The relevant database tables are replicated via Python data classes in the backend repository, whose definition can be found [here](https://github.com/auto-pl/ps2-map-controller/blob/main/controller/blips.py).
 

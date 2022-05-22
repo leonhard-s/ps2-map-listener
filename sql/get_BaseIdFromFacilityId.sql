@@ -1,7 +1,6 @@
 -- Accesses the public Map API to convert facility IDs to base IDs.
-SELECT (
+SELECT
     "id"
-)
 FROM
     "API_static"."Base"
 WHERE
