@@ -1,6 +1,6 @@
 -- Store a PlayerLogout blip in the database
 INSERT INTO "EventBuffer"."PlayerLogout" (
-    "timestamp", 
+    "timestamp",
     "player_id"
 )
 VALUES (
